@@ -19,7 +19,7 @@ app.use(cors());
 
 connectDB(DATABASE_URL);
 
-app.get("/", (req: Request, res: Response) => {
+app.get("/", (_req: Request, res: Response) => {
   res.json({ message: "Hello from rgb's backend" });
 });
 
