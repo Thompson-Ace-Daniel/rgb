@@ -7,7 +7,8 @@ import cors from "cors";
 import "dotenv/config";
 
 import { connectDB } from "./config/connect-db.js";
-import draftRouter from "./routes/draftRoutes.js";
+import draftRouter from "./routes/draft.routes.js";
+import voiceRouter from "./routes/voice-over.routes.js";
 
 const app: Application = express();
 const PORT: number = Number(process.env["PORT"]) || 5000;
@@ -21,6 +22,7 @@ app.use(cors());
 connectDB(DATABASE_URL);
 
 app.use("/api", draftRouter);
+app.use("/api", voiceRouter);
 
 app.get("/", (_req: Request, res: Response) => {
   res.json({ message: "Hello from rgb's backend" });
