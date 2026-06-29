@@ -1,0 +1,55 @@
+export const themes = {
+  red: {
+    bg: "bg-red-950",
+    card: "bg-red-900",
+    primary: "bg-red-600",
+    text: "text-white",
+    subtext: "text-red-300",
+    border: "border-red-600",
+    label: "Roast",
+    emoji: "🔥",
+    colors: {
+      bg: "#0c0a0a",
+      card: "#1c0a0a",
+      primary: "#dc2626",
+      subtext: "#fca5a5",
+      border: "#dc2626",
+    },
+  },
+  blue: {
+    bg: "bg-blue-950",
+    card: "bg-blue-900",
+    primary: "bg-blue-600",
+    text: "text-white",
+    subtext: "text-blue-300",
+    border: "border-blue-600",
+    label: "Compliment",
+    emoji: "💙",
+    colors: {
+      bg: "#0a0c1c",
+      card: "#0a1228",
+      primary: "#2563eb",
+      subtext: "#93c5fd",
+      border: "#2563eb",
+    },
+  },
+  green: {
+    bg: "bg-green-950",
+    card: "bg-green-900",
+    primary: "bg-green-600",
+    text: "text-white",
+    subtext: "text-green-300",
+    border: "border-green-600",
+    label: "Joke",
+    emoji: "😂",
+    colors: {
+      bg: "#0a0c0a",
+      card: "#0a1a0a",
+      primary: "#16a34a",
+      subtext: "#86efac",
+      border: "#16a34a",
+    },
+  },
+};
+
+export type ThemeMode = keyof typeof themes;
