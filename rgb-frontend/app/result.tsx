@@ -7,18 +7,35 @@ import {
   StyleSheet,
 } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { Audio } from "expo-av";
 import { useTheme } from "../context/ThemeContext";
+
+type SearchParams = {
+  recipient: string;
+  tune: string;
+  optional?: string;
+};
 
 export default function ResultScreen() {
   const { theme, mode } = useTheme();
   const router = useRouter();
-  const { recipient, tune, optional } = useLocalSearchParams();
+  const { recipient, tune, optional } = useLocalSearchParams<SearchParams>();
+
   const [result, setResult] = useState("");
   const [loading, setLoading] = useState(true);
+  const [audioLoading, setAudioLoading] = useState(false);
+
+  const soundRef = useRef<Audio.Sound | null>(null);
 
   useEffect(() => {
     generateResult();
+
+    return () => {
+      if (soundRef.current) {
+        soundRef.current.unloadAsync();
+      }
+    };
   }, []);
 
   async function generateResult() {
@@ -46,6 +63,58 @@ export default function ResultScreen() {
       setResult("Failed to generate. Please try again.");
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function playAudioFromBackend(textInput: string) {
+    if (!textInput || audioLoading) return;
+    setAudioLoading(true);
+
+    try {
+      if (soundRef.current) {
+        await soundRef.current.unloadAsync();
+        soundRef.current = null;
+      }
+
+      const response = await fetch(
+        "https://rgb-psi.vercel.app/api/generate-audio",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text: textInput }),
+        },
+      );
+
+      if (!response.ok) {
+        console.error("Failed to fetch audio from server");
+        setAudioLoading(false);
+        return;
+      }
+
+      const blob = await response.blob();
+      const reader = new FileReader();
+
+      reader.onloadend = async () => {
+        try {
+          const dataUrl = reader.result as string;
+
+          const { sound } = await Audio.Sound.createAsync(
+            { uri: dataUrl },
+            { shouldPlay: true },
+          );
+
+          soundRef.current = sound;
+        } catch (playError) {
+          console.error("Error playing data URI stream:", playError);
+        } finally {
+          setAudioLoading(false);
+        }
+      };
+
+      reader.readAsDataURL(blob);
+    } catch (error) {
+      console.error("Error playing audio:", error);
+      setAudioLoading(false);
     }
   }
 
@@ -81,9 +150,34 @@ export default function ResultScreen() {
 
         <TouchableOpacity
           onPress={generateResult}
-          style={[styles.regenBtn, { backgroundColor: theme.colors.primary }]}
+          disabled={loading}
+          style={[
+            styles.regenBtn,
+            {
+              backgroundColor: theme.colors.primary,
+              opacity: loading ? 0.6 : 1,
+            },
+          ]}
         >
-          <Text style={styles.regenBtnText}>Regenerate 🔄</Text>
+          <Text style={styles.regenBtnText}>Regenerate</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          onPress={() => playAudioFromBackend(result)}
+          disabled={loading || audioLoading}
+          style={[
+            styles.regenBtn,
+            {
+              backgroundColor: theme.colors.primary,
+              opacity: loading || audioLoading ? 0.6 : 1,
+            },
+          ]}
+        >
+          {audioLoading ? (
+            <ActivityIndicator size="small" color="#fff" />
+          ) : (
+            <Text style={styles.regenBtnText}>Speak</Text>
+          )}
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -138,6 +232,8 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     alignItems: "center",
     marginBottom: 16,
+    flexDirection: "row",
+    justifyContent: "center",
   },
   regenBtnText: {
     color: "#fff",
